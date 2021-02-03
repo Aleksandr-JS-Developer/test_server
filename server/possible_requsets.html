@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Work with testing server</title>
+	<style>
+		html {
+			background-color: black;
+			color: limegreen;
+		}
+
+		table {
+			color: black;
+			background-color: white;
+			border: 1px solid gray;
+			letter-spacing: 0px;
+			border-spacing: 0px;
+			margin-bottom: 80px;
+			border-collapse: collapse;
+			width: 100%;
+		}
+
+		tr:nth-child(2n) {
+			background-color: lightgray;
+		}
+
+		tr {
+
+			padding: 110px 0px;
+		}
+
+		td {
+			font-size: 1.1em;
+			border: 1px solid gray;
+			padding: 20px;
+		}
+
+		td.decription {
+			/* width: 500px; */
+			width: auto;
+		}
+
+		td.path {
+			text-align: center;
+			width: 90px;
+		}
+
+		td.make-req-bttn {
+			text-align: center;
+			width: 170px;
+		}
+
+		tr.strong * {
+			font-weight: bold;
+		}
+
+		.method-decription {
+			font-size: 18px;
+			font-weight: bolder;
+		}
+
+		button.clicked {
+			box-shadow: none;
+			transition: 0.4s;
+		}
+
+		button {
+			transition: 0.4s;
+			box-shadow: inset 0px 0px 0px 0px #FFF, 2px 5px 16px 0px #0B325E, 0px 0px 0px 5px rgba(0, 0, 0, 0);
+
+			background-color: lightgray;
+			border: 1px solid gray;
+			border-radius: 5px;
+			padding: 5px;
+		}
+
+		button:focus {
+			border: 1px solid gray;
+			outline: none;
+		}
+
+		button:active {
+			border: 1px solid gray;
+			outline: none;
+		}
+
+		button:hover {
+			cursor: pointer;
+		}
+
+		#_console {
+			border: 1px solid limegreen;
+			padding: 5px;
+			height: 200px;
+			overflow-y: scroll;
+			overflow-x: hidden;
+		}
+
+		#_console::-webkit-scrollbar {
+			width: 0px;
+		}
+	</style>
+</head>
+
+<body>
+	<header class="haeder">
+		[v1.2.0]
+	</header><br>
+	console:
+	<div id="_console" title="click to clear"></div>
+	<div>
+		<h2>POST</h2>
+		<p class="method-decription">
+			Сервер принимает POST запросы. <br>На все post запросы сервер отвечает тем-же, что вы отправляли в теле
+			запроса. <br>
+			Тело тестового запроса выглядит следующим образом: {test: "test"}
+		</p>
+	</div>
+	<table>
+		<tr class="strong">
+			<td class="path"><span class="table-method">POST</span> path</td>
+			<td class="decription">Descriptions</td>
+			<td>make POST request</td>
+		</tr>
+		<tr>
+			<td class="path">/</td>
+			<td class="decription">Получить тело своего запроса без задержки.</td>
+			<td class="make-req-bttn">
+				<button>make request</button>
+			</td>
+		</tr>
+		<tr>
+			<td class="path">/delay:num</td>
+			<td class="decription">Получить тело своего запроса c задержкой в num секунд</td>
+			<td class="make-req-bttn">
+				<button>make request</button>
+			</td>
+		</tr>
+	</table>
+	
+	<div>
+		<h2>GET</h2>
+		<p class="method-decription">
+			Сервер принимает так-же GET запросы.
+		</p>
+	</div>
+	<table>
+		<tr class="strong">
+			<td class="path"><span class="table-method">GET</span> path</td>
+			<td class="decription">Descriptions</td>
+			<td class="make-req-bttn">make GET request</td>
+		</tr>
+		<tr>
+			<td class="path">/</td>
+			<td class="decription">Получить эту страницу</td>
+			<td class="make-req-bttn">
+				<button>make request</button>
+			</td>
+		</tr>
+		<tr>
+			<td class="path">/code</td>
+			<td class="decription">Получить код файла backend.js</td>
+			<td class="make-req-bttn">
+				<button>make request</button>
+			</td>
+		</tr>
+	</table>
+</body>
+<script>
+	/////////////////////////
+	// backed.js
+	const port = 7359;
+	const ip = '127.0.0.1';
+	const _server = `http://${ip}:${port}`;
+	const _headers = {
+		'Access-Control-Allow-Hseaders': 'Origin, X-Requested-With, Content-Type, Accept',
+		'Access-Control-Allow-Methods': 'GET, POST, DELETE, PUT',
+		'Access-Control-Allow-Origin': 'no-cors',
+		'Content-Type': 'application/json'
+	}
+	async function request(url, method = 'GET', data = null) {
+		try {
+			let body;
+			if (data !== null) {
+				body = JSON.stringify(data);
+			}
+			const response = await fetch(_server + url, {
+				method,
+				headers: _headers,
+				body
+			});
+			return await response.text();
+		} catch (e) {
+			console.error(e)
+		}
+	}
+	// /backend.js
+	/////////////////////////
+	const bttns = document.querySelectorAll('button');
+	const _console = document.getElementById('_console');
+	bttns.forEach(item => {
+		item.addEventListener('click', async (e) => {
+			item.classList.add('clicked');
+			setTimeout(() => { item.classList.remove('clicked'); }, 100)
+			let url = e.path[2].querySelector('.path').innerHTML;
+			if( url === '/delay:num' ){
+				url = `/delay${prompt( 'Укажите задержку в секундах', 2 )}`;
+			}
+			const method = e.path[4].querySelector('.table-method').innerHTML;
+			let serverUnswer;
+			_console.innerHTML += `${method} - ${url} <br>`;
+			_console.scrollTop = _console.scrollHeight;
+
+			if (method === 'POST') {
+				serverUnswer = await request(url, method, { test: 'test' });
+			} else {
+				serverUnswer = await request(url, method);
+			}
+			_console.innerHTML += serverUnswer;
+			_console.innerHTML += '<br><br>';
+			_console.scrollTop = _console.scrollHeight;
+			_console.onclick = () => {
+				_console.innerHTML = null;
+			};
+		});
+	});
+</script>
+
+</html>
